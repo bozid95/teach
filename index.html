@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Informasi Kelas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- PWA Manifest -->
+    <link rel="manifest" id="manifest-placeholder">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Info Kelas">
+
+    <style>
+        .card-gradient-1 { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); }
+        .card-gradient-2 { background: linear-gradient(135deg, #3b82f6 0%, #2dd4bf 100%); }
+        .card-gradient-3 { background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); }
+        
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans antialiased text-slate-900">
+
+<div id="app">
+    <div class="min-h-screen p-6">
+        <header class="mb-8 mt-4 text-center">
+            <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">Info Kelas</h1>
+            <p class="text-slate-500 mt-2">Ketuk kartu untuk membuka dokumen</p>
+            
+            <!-- Tombol Instalasi PWA -->
+            <button v-if="deferredPrompt" @click="installApp" class="mt-4 bg-indigo-600 text-white px-6 py-2 rounded-full font-semibold shadow-lg shadow-indigo-200 active:scale-95 transition">
+                Instal Aplikasi
+            </button>
+        </header>
+
+        <div class="grid grid-cols-1 gap-5 max-w-md mx-auto">
+            <!-- Loop kartu yang akan langsung redirect saat diklik -->
+            <a v-for="(tab, index) in tabs" 
+               :key="tab.id"
+               :href="tab.url"
+               target="_blank"
+               :class="['relative block overflow-hidden rounded-2xl p-6 text-white shadow-xl active:scale-95 transition-transform duration-200', 'card-gradient-' + (index + 1)]">
+                <div class="relative z-10 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-bold">{{ tab.name }}</h2>
+                        <p class="text-white/80 text-sm mt-1">Buka di Google Sheets</p>
+                    </div>
+                    <span class="text-4xl" v-html="tab.icon"></span>
+                </div>
+                <!-- Lingkaran Dekoratif -->
+                <div class="absolute -bottom-6 -right-6 w-24 h-24 bg-white/10 rounded-full"></div>
+            </a>
+        </div>
+
+        <footer class="mt-12 text-center text-slate-400 text-xs">
+            <p>&copy; 2026 </p>
+        </footer>
+    </div>
+</div>
+
+<script>
+    const { createApp, ref, onMounted } = Vue;
+
+    createApp({
+        setup() {
+            const tabs = [
+                { 
+                    id: 'hadir', 
+                    name: 'Daftar Hadir', 
+                    icon: '📋',
+                    // Menggunakan link edit agar bisa langsung diisi jika punya akses
+                    url: 'https://docs.google.com/spreadsheets/d/1ynXmeuFB7Wtn68BZcnlQt72iUzxlCYQT/edit?gid=1771867898' 
+                },
+                { 
+                    id: 'agenda', 
+                    name: 'Agenda Pembelajaran', 
+                    icon: '📓',
+                    url: 'https://docs.google.com/spreadsheets/d/1ZpyerU_kkB9yQg3eBCaCep39VFAVGYq7/edit?gid=1328075206' 
+                },
+                { 
+                    id: 'nilai', 
+                    name: 'Daftar Nilai', 
+                    icon: '🏆',
+                    url: 'https://docs.google.com/spreadsheets/d/13TSzAe8XZPX3lDr1IP-yhuSB4nDSH0Pp/edit?gid=1003913022' 
+                }
+            ];
+
+            const deferredPrompt = ref(null);
+
+            const installApp = async () => {
+                if (!deferredPrompt.value) return;
+                deferredPrompt.value.prompt();
+                const { outcome } = await deferredPrompt.value.userChoice;
+                if (outcome === 'accepted') {
+                    deferredPrompt.value = null;
+                }
+            };
+
+            onMounted(() => {
+                window.addEventListener('beforeinstallprompt', (e) => {
+                    e.preventDefault();
+                    deferredPrompt.value = e;
+                });
+
+                // Manifest Setup
+                const manifest = {
+                    "name": "Sistem Informasi Kelas",
+                    "short_name": "InfoKelas",
+                    "start_url": ".",
+                    "display": "standalone",
+                    "background_color": "#f8fafc",
+                    "theme_color": "#4f46e5",
+                    "icons": [
+                        {
+                            "src": "https://cdn-icons-png.flaticon.com/512/3242/3242257.png",
+                            "sizes": "512x512",
+                            "type": "image/png"
+                        }
+                    ]
+                };
+                const stringManifest = JSON.stringify(manifest);
+                const blob = new Blob([stringManifest], {type: 'application/json'});
+                const manifestURL = URL.createObjectURL(blob);
+                document.querySelector('#manifest-placeholder').setAttribute('href', manifestURL);
+            });
+
+            return {
+                tabs,
+                deferredPrompt,
+                installApp
+            };
+        }
+    }).mount('#app');
+</script>
+
+</body>
+</html>
